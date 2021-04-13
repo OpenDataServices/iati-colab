@@ -16,14 +16,16 @@ def remove_comments(etree):
 
 
 def get_datasets(registry_id="", exceptions="", include_urls=""):
+    datasets = []
     if registry_id:
-        exceptions = exceptions or []
-        dataset_df = pd.read_csv("https://iatiregistry.org/csv/download/" + registry_id)
-        dataset_df = dataset_df[dataset_df["file-type"] != "organisation"]
-        dataset_df = dataset_df[~dataset_df["registry-file-id"].isin(exceptions)]
-        datasets = dataset_df['source-url'].tolist()
-    else:
-        datasets = []
+        registries = registry_id.split()
+        for registry in registries:
+            exceptions = exceptions or []
+            dataset_df = pd.read_csv("https://iatiregistry.org/csv/download/" + registry)
+            dataset_df = dataset_df[dataset_df["file-type"] != "organisation"]
+            dataset_df = dataset_df[~dataset_df["registry-file-id"].isin(exceptions)]
+            datasets.extend(dataset_df['source-url'].tolist())
+
     datasets.extend(include_urls.split())
 
     return datasets
