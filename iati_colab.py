@@ -250,7 +250,7 @@ def show_tests():
 
 def get_test(name, test_number=1):
     for feature_path in test_definitions_path.glob('**/*.feature'):
-        if feature_path.name.startswith(name):
+        if feature_path.name.startswith(str(name)):
             found_path = str(feature_path)
             break
     else:
@@ -275,6 +275,6 @@ def test_activities(activities, name, test_number=1, **kw):
 
 def test_activity(activity, name, test_number=1, **kw):
     test = get_test(name, test_number)
-    print(f'running test {test.name}')
+    print(f'running test: {test.name}')
     activity = ET.fromstring(activity)
     return test(activity, **kw)
