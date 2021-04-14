@@ -218,11 +218,9 @@ tester = None
 
 
 def setup_indicator_definitions(repo='https://github.com/pwyf/latest-index-indicator-definitions.git', branch=None):
-    cmd = f"""
-        git clone {repo} indicator_definitions
-    """
+    cmd = f'git clone {repo} indicator_definitions'
     if branch:
-        cmd += f'-b {branch}'
+        cmd += f' -b {branch}'
 
     process = subprocess.run(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
