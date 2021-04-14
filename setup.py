@@ -7,6 +7,8 @@ install_requires = [
     'pandas',
     'requests',
     'lxml',
+    'gherkin-official<=15',
+    'bdd-tester==0.0.6',
 ]
 
 setup(

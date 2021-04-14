@@ -5,6 +5,11 @@ import requests as rq
 import lxml.etree as ET
 import json
 import copy
+import subprocess
+import pathlib
+from collections import defaultdict
+
+from bdd_tester import BDDTester
 
 
 def remove_comments(etree):
@@ -206,3 +211,70 @@ def cove_validation(activities):
     return schema_table, ruleset_table, embedded_codelist_table, non_embedded_codelist_table
 
 
+content_path = None
+test_definitions_path = None
+steps_path = None
+tester = None
+
+
+def setup_indicator_definitions(repo='https://github.com/pwyf/latest-index-indicator-definitions.git', branch=None):
+    cmd = f"""
+        git clone {repo} indicator_definitions
+    """
+    if branch:
+        cmd += f'-b {branch}'
+
+    process = subprocess.run(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    print(process.stderr.decode())
+
+    global content_path
+    global test_definitions_path
+    global steps_path
+    global tester
+
+    content_path = pathlib.Path('/content')
+    test_definitions_path = content_path / 'indicator_definitions' / 'test_definitions'
+    steps_path = test_definitions_path / 'step_definitions.py'
+    tester = BDDTester(str(steps_path))
+
+
+def show_tests():
+    for feature_path in sorted(test_definitions_path.glob('**/*.feature'), key=lambda a: a.name):
+        feature = tester.load_feature(str(feature_path))
+        print(feature_path.name)
+        for num, test in enumerate(feature.tests):
+            print(f'    {num+1}. {test.name}')
+
+
+def get_test(name, test_number=1):
+    for feature_path in test_definitions_path.glob('**/*.feature'):
+        if feature_path.name.startswith(name):
+            found_path = str(feature_path)
+            break
+    else:
+        raise Exception('Feature not found')
+
+    feature = tester.load_feature(str(found_path))
+
+    return feature.tests[test_number - 1]
+
+
+def test_activities(activities, name, test_number=1, **kw):
+    results = defaultdict(list)
+    test = get_test(name, test_number)
+    print(f'running test {test.name}')
+    for num, activity in enumerate(activities.findall('iati-activity')):
+        result = test(activity, **kw)
+        results[result].append(activity)
+    for key, value in results.items():
+        print(f'{key} -> {len(value)}')
+    return results
+
+
+def test_activity(activity, name, test_number=1, **kw):
+    test = get_test(name, test_number)
+    print(f'running test {test.name}')
+    activity = ET.fromstring(activity)
+    return test(activity, **kw)
